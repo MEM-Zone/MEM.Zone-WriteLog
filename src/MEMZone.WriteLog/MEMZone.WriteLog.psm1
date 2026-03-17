@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    PSWriteLog - PowerShell Logging, Formatting, and Animation Module.
+    MEMZone.WriteLog - PowerShell Logging, Formatting, and Animation Module.
 .DESCRIPTION
     Provides structured logging with dual console/file output, rich text formatting
     (tables, blocks, timelines, headers), animated progress indicators via background

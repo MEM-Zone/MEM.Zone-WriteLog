@@ -1,8 +1,8 @@
-# PSWriteLog
+# MEMZone.WriteLog
 
 [![CI](https://github.com/MEM-Zone/MEM.Zone-PSWriteLog/actions/workflows/ci.yml/badge.svg)](https://github.com/MEM-Zone/MEM.Zone-PSWriteLog/actions/workflows/ci.yml)
-[![PSGallery Version](https://img.shields.io/powershellgallery/v/PSWriteLog.svg)](https://www.powershellgallery.com/packages/PSWriteLog)
-[![PSGallery Downloads](https://img.shields.io/powershellgallery/dt/PSWriteLog.svg)](https://www.powershellgallery.com/packages/PSWriteLog)
+[![PSGallery Version](https://img.shields.io/powershellgallery/v/MEMZone.WriteLog.svg)](https://www.powershellgallery.com/packages/MEMZone.WriteLog)
+[![PSGallery Downloads](https://img.shields.io/powershellgallery/dt/MEMZone.WriteLog.svg)](https://www.powershellgallery.com/packages/MEMZone.WriteLog)
 [![License](https://img.shields.io/github/license/MEM-Zone/MEM.Zone-PSWriteLog.svg)](LICENSE)
 
 Structured PowerShell logging with dual console/file output, rich text formatting, animated progress indicators, and debug-level function tracing.
@@ -21,7 +21,7 @@ Structured PowerShell logging with dual console/file output, rich text formattin
 ### PowerShell Gallery (recommended)
 
 ```powershell
-Install-Module -Name PSWriteLog -Scope CurrentUser
+Install-Module -Name MEMZone.WriteLog -Scope CurrentUser
 ```
 
 ### Manual
@@ -30,13 +30,13 @@ Clone the repository and import the module directly:
 
 ```powershell
 git clone https://github.com/MEM-Zone/MEM.Zone-PSWriteLog.git
-Import-Module ./MEM.Zone-PSWriteLog/src/PSWriteLog/PSWriteLog.psd1
+Import-Module ./MEM.Zone-PSWriteLog/src/MEMZone.WriteLog/MEMZone.WriteLog.psd1
 ```
 
 ## Quick Start
 
 ```powershell
-Import-Module PSWriteLog
+Import-Module MEMZone.WriteLog
 
 # Initialize logging
 Initialize-PSWriteLog -LogName 'MyScript' -LogPath 'C:\Logs\MyScript'

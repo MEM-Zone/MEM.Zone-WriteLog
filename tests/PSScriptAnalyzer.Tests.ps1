@@ -1,10 +1,10 @@
 #Requires -Module Pester
 #Requires -Module PSScriptAnalyzer
 
-Describe 'PSScriptAnalyzer: PSWriteLog' {
+Describe 'PSScriptAnalyzer: MEMZone.WriteLog' {
 
     BeforeAll {
-        $ModuleSourcePath = Join-Path -Path $PSScriptRoot -ChildPath '../src/PSWriteLog'
+        $ModuleSourcePath = Join-Path -Path $PSScriptRoot -ChildPath '../src/MEMZone.WriteLog'
         $AnalyzerResults  = Invoke-ScriptAnalyzer -Path $ModuleSourcePath -Recurse -Settings PSGallery -Severity @('Error', 'Warning')
     }
 
