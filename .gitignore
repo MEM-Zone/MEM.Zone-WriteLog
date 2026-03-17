@@ -1,0 +1,21 @@
+# Build output
+output/
+specs.md
+
+# Test results
+testResults.xml
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE / editor
+.vscode/
+.idea/
+*.suo
+*.user
+
+# PowerShell
+*.psess
+*.vspx
