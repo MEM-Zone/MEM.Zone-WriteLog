@@ -1,6 +1,6 @@
 # Build output
 output/
-specs.md
+agents/
 
 # Test results
 testResults.xml
