@@ -22,8 +22,16 @@ function Write-FunctionHeaderOrFooter {
     None
 .OUTPUTS
     None
+.NOTES
+    This is an internal script function and should typically not be called directly.
 .LINK
     https://MEM.Zone
+.LINK
+    https://MEMZ.one/PSWriteLog
+.LINK
+    https://MEMZ.one/PSWriteLog-GIT
+.LINK
+    https://MEMZ.one/PSWriteLog-ISSUES
 .COMPONENT
     Script Utilities
 .FUNCTIONALITY
@@ -51,18 +59,28 @@ function Write-FunctionHeaderOrFooter {
         if ($Header) {
             Write-Log -Message 'Function Start' -Source $CmdletName -DebugMessage
 
+            ## Get the parameters that the calling function was invoked with
             if ($CmdletBoundParameters.Count -gt 0) {
+
+                #  Use StringBuilder for string concatenation
                 $ParamStringBuilder = [System.Text.StringBuilder]::new()
 
+                #  Pre-calculate max key length for proper alignment
                 [int]$MaxKeyLength = 0
                 foreach ($Key in $CmdletBoundParameters.Keys) {
+                    #  Adding 4 for '[-' and ']'
                     [int]$KeyLength = $Key.Length + 4
                     if ($KeyLength -gt $MaxKeyLength) { $MaxKeyLength = $KeyLength }
                 }
+
+                #  Add padding for readability
                 $MaxKeyLength += 2
 
+                #  Process each parameter
                 foreach ($Param in $CmdletBoundParameters.GetEnumerator()) {
                     [string]$ParameterName = "[-$($Param.Key)]"
+
+                    #  Handle different value types securely and informatively
                     [string]$ParameterValue = Switch ($Param.Value) {
                         { $null -eq $PSItem } { '<null>' }
                         { $PSItem -is [System.Security.SecureString] } { '<SecureString>' }
@@ -85,9 +103,11 @@ function Write-FunctionHeaderOrFooter {
                             else { $StringValue }
                         }
                     }
+                    #  Format with proper alignment
                     [void]$ParamStringBuilder.AppendLine(("{0,-$MaxKeyLength} {1}" -f $ParameterName, $ParameterValue))
                 }
 
+                #  Remove trailing newline and write to log
                 [string]$FormattedParameters = $ParamStringBuilder.ToString().TrimEnd()
                 Write-Log -Message "Function invoked with bound parameter(s):`n$FormattedParameters" -Source $CmdletName -DebugMessage
             }

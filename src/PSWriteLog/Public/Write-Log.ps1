@@ -49,14 +49,23 @@ function Write-Log {
     System.Object
 .OUTPUTS
     None
+.NOTES
+    This is an internal script function and should typically not be called directly.
 .LINK
     https://MEM.Zone
+.LINK
+    https://MEMZ.one/PSWriteLog
+.LINK
+    https://MEMZ.one/PSWriteLog-GIT
+.LINK
+    https://MEMZ.one/PSWriteLog-ISSUES
 .COMPONENT
     Script Logging
 .FUNCTIONALITY
     Log Message
 #>
     [CmdletBinding()]
+    [OutputType([void])]
     param (
         [Parameter(Position = 0)]
         [Alias('Level')]
@@ -148,6 +157,7 @@ function Write-Log {
                     switch ($Severity) {
                         'Information' {
                             if ($Console) {
+                                #  Use [Console]::WriteLine for proper Unicode support
                                 if ($MessageLine -match '^[=\-]+$') {
                                     [Console]::ForegroundColor = $SeparatorColor
                                 }

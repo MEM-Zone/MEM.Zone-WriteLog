@@ -39,8 +39,16 @@ function Invoke-WithAnimation {
     None
 .OUTPUTS
     Returns the output of the ScriptBlock.
+.NOTES
+    This is an internal script function and should typically not be called directly.
 .LINK
     https://MEM.Zone
+.LINK
+    https://MEMZ.one/PSWriteLog
+.LINK
+    https://MEMZ.one/PSWriteLog-GIT
+.LINK
+    https://MEMZ.one/PSWriteLog-ISSUES
 .COMPONENT
     Script Utilities
 .FUNCTIONALITY
@@ -72,6 +80,8 @@ function Invoke-WithAnimation {
     )
 
     begin {
+
+        ## Define animation frames
         $AnimationFrames = @{
             Spinner = @('|', '/', '-', '\')
             Dots    = @('.  ', '.. ', '...', ' ..', '  .', '   ')
@@ -103,13 +113,16 @@ function Invoke-WithAnimation {
             return $Result
         }
 
+        ## Write initial message without newline
         Write-Host "    - $Message " -NoNewline -ForegroundColor 'Yellow'
 
+        ## Save cursor position for animation
         $AnimationLeft = [Console]::CursorLeft
         $AnimationTop = [Console]::CursorTop
         Write-Host "$($Frames[0])" -NoNewline -ForegroundColor 'Cyan'
         $FrameIndex = 1
 
+        ## Start background runspace
         $Runspace = [runspacefactory]::CreateRunspace()
         $Runspace.Open()
         $Runspace.SessionStateProxy.SetVariable('ScriptBlock', $ScriptBlock)
@@ -132,10 +145,12 @@ function Invoke-WithAnimation {
             }
         })
 
+        ## Use input/output buffers to capture streams and prevent console interference
         $InputBuffer = [System.Management.Automation.PSDataCollection[PSObject]]::new()
         $OutputBuffer = [System.Management.Automation.PSDataCollection[PSObject]]::new()
         $AsyncResult = $PowerShell.BeginInvoke($InputBuffer, $OutputBuffer)
 
+        ## Animate while waiting for completion - use .NET methods to avoid cmdlet resolution issues
         try {
             while (-not $AsyncResult.IsCompleted) {
                 [Console]::SetCursorPosition($AnimationLeft, $AnimationTop)
@@ -146,6 +161,7 @@ function Invoke-WithAnimation {
                 [System.Threading.Thread]::Sleep($RefreshRate)
             }
 
+            ## Get the result from output buffer
             $null = $PowerShell.EndInvoke($AsyncResult)
             if ($OutputBuffer -and $OutputBuffer.Count -gt 0) {
                 $Success = $OutputBuffer[0].Success
@@ -153,6 +169,7 @@ function Invoke-WithAnimation {
                 $ErrorMessage = $OutputBuffer[0].Error
             }
 
+            ## Show completion indicator BEFORE runspace disposal - use .NET methods
             [Console]::SetCursorPosition($AnimationLeft, $AnimationTop)
             [Console]::Write('   ')
             [Console]::SetCursorPosition($AnimationLeft, $AnimationTop)
@@ -168,12 +185,14 @@ function Invoke-WithAnimation {
             }
         }
         finally {
+            ## Clean up runspace
             [System.Threading.Thread]::Sleep(50)
             $PowerShell.Dispose()
             $Runspace.Close()
             $Runspace.Dispose()
         }
 
+        ## Log to file AFTER runspace cleanup (Write-Log is safe now)
         if ($Success) {
             Write-Log -Message "$Message" -Console:$false
         }
@@ -181,6 +200,7 @@ function Invoke-WithAnimation {
             Write-Log -Message "$Message - Failed: $ErrorMessage" -Severity 'Error' -Console:$false
         }
 
+        ## Return result or throw error
         if (-not $Success -and $ErrorMessage) {
             throw $ErrorMessage
         }

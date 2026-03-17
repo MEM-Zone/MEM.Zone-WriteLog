@@ -14,12 +14,19 @@ function Write-LogBuffer {
     This is an internal script function and should typically not be called directly.
 .LINK
     https://MEM.Zone
+.LINK
+    https://MEMZ.one/PSWriteLog
+.LINK
+    https://MEMZ.one/PSWriteLog-GIT
+.LINK
+    https://MEMZ.one/PSWriteLog-ISSUES
 .COMPONENT
     Script Logging
 .FUNCTIONALITY
     Log Buffer Management
 #>
     [CmdletBinding()]
+    [OutputType([void])]
     param()
 
     process {

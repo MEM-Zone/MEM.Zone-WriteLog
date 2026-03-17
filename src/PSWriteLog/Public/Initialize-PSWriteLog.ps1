@@ -24,14 +24,23 @@ function Initialize-PSWriteLog {
     None
 .OUTPUTS
     None
+.NOTES
+    This is an internal script function and should typically not be called directly.
 .LINK
     https://MEM.Zone
+.LINK
+    https://MEMZ.one/PSWriteLog
+.LINK
+    https://MEMZ.one/PSWriteLog-GIT
+.LINK
+    https://MEMZ.one/PSWriteLog-ISSUES
 .COMPONENT
     Script Logging
 .FUNCTIONALITY
     Log Initialization
 #>
     [CmdletBinding()]
+    [OutputType([void])]
     param (
         [Parameter(Mandatory = $true, Position = 0)]
         [ValidateNotNullOrEmpty()]
@@ -53,6 +62,8 @@ function Initialize-PSWriteLog {
     )
 
     process {
+
+        ## Set module state variables
         $Script:LogName           = $LogName
         $Script:LogPath           = $LogPath
         $Script:LogFullName       = [System.IO.Path]::Combine($LogPath, "$LogName.log")
@@ -61,6 +72,7 @@ function Initialize-PSWriteLog {
         $Script:LogMaxSizeMB      = $LogMaxSizeMB
         $Script:LogBuffer         = [System.Collections.ArrayList]::new()
 
+        ## Create log directory and file, rotate if oversized
         Test-LogFile -LogFile $Script:LogFullName -MaxSizeMB $Script:LogMaxSizeMB
     }
 }

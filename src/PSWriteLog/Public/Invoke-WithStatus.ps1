@@ -24,6 +24,12 @@ function Invoke-WithStatus {
     Use this instead of Invoke-WithAnimation when the operation must run in the main session.
 .LINK
     https://MEM.Zone
+.LINK
+    https://MEMZ.one/PSWriteLog
+.LINK
+    https://MEMZ.one/PSWriteLog-GIT
+.LINK
+    https://MEMZ.one/PSWriteLog-ISSUES
 .COMPONENT
     Script Utilities
 .FUNCTIONALITY
@@ -46,6 +52,7 @@ function Invoke-WithStatus {
 
     process {
 
+        ## If console output disabled, just run without status display
         if (-not $Script:LogToConsole) {
             Write-Log -Message "$Message" -Console:$false
             try {
@@ -57,10 +64,12 @@ function Invoke-WithStatus {
             }
         }
 
+        ## Write message without newline
         [Console]::ForegroundColor = 'Yellow'
         [Console]::Write("    - $Message ")
         [Console]::ResetColor()
 
+        ## Execute scriptblock synchronously in current session
         $Success = $true
         $ErrorMessage = $null
         $Result = $null
@@ -73,6 +82,7 @@ function Invoke-WithStatus {
             $ErrorMessage = $PSItem.Exception.Message
         }
 
+        ## Show result indicator
         if ($Success) {
             [Console]::ForegroundColor = 'Green'
             [Console]::WriteLine($SuccessIndicator)

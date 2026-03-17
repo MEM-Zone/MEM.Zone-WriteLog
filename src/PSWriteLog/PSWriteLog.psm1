@@ -12,11 +12,16 @@
 .LINK
     https://MEM.Zone
 .LINK
-    https://MEM.Zone/GIT
+    https://MEMZ.one/PSWriteLog
 .LINK
-    https://MEM.Zone/ISSUES
+    https://MEMZ.one/PSWriteLog-GIT
+.LINK
+    https://MEMZ.one/PSWriteLog-ISSUES
 #>
 
+##*=============================================
+##* MODULE STATE
+##*=============================================
 #region Module State
 
 [string]$Script:LogName           = ''
@@ -28,8 +33,14 @@
 $Script:LogBuffer                 = [System.Collections.ArrayList]::new()
 
 #endregion Module State
+##*=============================================
+##* END MODULE STATE
+##*=============================================
 
-#region Dot-Source Function Files
+##*=============================================
+##* FUNCTION LISTINGS
+##*=============================================
+#region FunctionListings
 
 $Public  = @(Get-ChildItem -Path "$PSScriptRoot/Public/*.ps1"  -ErrorAction SilentlyContinue)
 $Private = @(Get-ChildItem -Path "$PSScriptRoot/Private/*.ps1" -ErrorAction SilentlyContinue)
@@ -43,8 +54,14 @@ foreach ($FunctionFile in @($Public + $Private)) {
     }
 }
 
-#endregion Dot-Source Function Files
+#endregion FunctionListings
+##*=============================================
+##* END FUNCTION LISTINGS
+##*=============================================
 
+##*=============================================
+##* MODULE CLEANUP
+##*=============================================
 #region Module Cleanup
 
 $MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
@@ -54,3 +71,6 @@ $MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
 }
 
 #endregion Module Cleanup
+##*=============================================
+##* END MODULE CLEANUP
+##*=============================================

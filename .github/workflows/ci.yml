@@ -2,13 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master, develop]
     paths:
       - 'src/**'
       - 'tests/**'
       - 'build/build.ps1'
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   test:
