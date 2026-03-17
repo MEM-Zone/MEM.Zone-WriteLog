@@ -122,6 +122,13 @@ if ('Build' -in $Task) {
         [void]$CompiledContent.AppendLine()
     }
 
+    ## Preserve module cleanup handler from the source .psm1
+    $CleanupMatch = [regex]::Match($SourcePsm1, '(?s)#region Module Cleanup.*?#endregion Module Cleanup')
+    if ($CleanupMatch.Success) {
+        [void]$CompiledContent.AppendLine($CleanupMatch.Value)
+        [void]$CompiledContent.AppendLine()
+    }
+
     ## Append Private functions
     $PrivateFiles = Get-ChildItem -Path "$ModuleSourcePath/Private/*.ps1" -ErrorAction SilentlyContinue
     if ($PrivateFiles) {
