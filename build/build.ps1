@@ -80,6 +80,7 @@ if ('Test' -in $Task) {
     $PesterConfig = New-PesterConfiguration
     $PesterConfig.Run.Path           = $TestsPath
     $PesterConfig.Run.Exit           = $false
+    $PesterConfig.Run.PassThru       = $true
     $PesterConfig.Output.Verbosity   = 'Detailed'
     $PesterConfig.TestResult.Enabled = $true
     $PesterConfig.TestResult.OutputPath   = Join-Path -Path $ProjectRoot -ChildPath 'testResults.xml'
