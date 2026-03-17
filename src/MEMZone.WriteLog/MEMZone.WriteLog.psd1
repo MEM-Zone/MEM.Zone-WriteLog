@@ -1,6 +1,6 @@
 @{
     # Script module associated with this manifest
-    RootModule        = 'PSWriteLog.psm1'
+    RootModule        = 'MEMZone.WriteLog.psm1'
 
     # Version number of this module (SemVer)
     ModuleVersion     = '1.0.0'

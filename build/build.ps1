@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Build, test, and publish the PSWriteLog module.
+    Build, test, and publish the MEMZone.WriteLog module.
 .DESCRIPTION
     Orchestrates the module lifecycle: static analysis, unit tests, compiled builds, and
     PowerShell Gallery publishing. Supports individual or combined task execution.
@@ -14,7 +14,7 @@
     API key for publishing to the PowerShell Gallery. Required for the Publish task.
     Store securely and never commit to source control.
 .PARAMETER OutputPath
-    Directory for build output. Default: ./output/PSWriteLog
+    Directory for build output. Default: ./output/MEMZone.WriteLog
 .EXAMPLE
     ./build.ps1
     Runs Analyze and Test tasks with default settings.
@@ -32,15 +32,15 @@ param (
 
     [string]$NuGetApiKey,
 
-    [string]$OutputPath = (Join-Path -Path $PSScriptRoot -ChildPath '../output/PSWriteLog')
+    [string]$OutputPath = (Join-Path -Path $PSScriptRoot -ChildPath '../output/MEMZone.WriteLog')
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 [string]$ProjectRoot      = Split-Path -Path $PSScriptRoot -Parent
-[string]$ModuleSourcePath = Join-Path -Path $ProjectRoot -ChildPath 'src/PSWriteLog'
-[string]$ModuleName       = 'PSWriteLog'
+[string]$ModuleSourcePath = Join-Path -Path $ProjectRoot -ChildPath 'src/MEMZone.WriteLog'
+[string]$ModuleName       = 'MEMZone.WriteLog'
 [string]$TestsPath        = Join-Path -Path $ProjectRoot -ChildPath 'tests'
 
 #region Task: Analyze

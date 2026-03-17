@@ -1,24 +1,24 @@
 #Requires -Module Pester
 
 BeforeAll {
-    $ModulePath = Join-Path -Path $PSScriptRoot -ChildPath '../src/PSWriteLog/PSWriteLog.psd1'
+    $ModulePath = Join-Path -Path $PSScriptRoot -ChildPath '../src/MEMZone.WriteLog/MEMZone.WriteLog.psd1'
     Import-Module -Name $ModulePath -Force -ErrorAction Stop
 }
 
 AfterAll {
-    Remove-Module -Name PSWriteLog -Force -ErrorAction SilentlyContinue
+    Remove-Module -Name MEMZone.WriteLog -Force -ErrorAction SilentlyContinue
 }
 
-Describe 'Module: PSWriteLog' {
+Describe 'Module: MEMZone.WriteLog' {
 
     Context 'Module Import' {
 
         It 'Should import without errors' {
-            { Import-Module -Name (Join-Path $PSScriptRoot '../src/PSWriteLog/PSWriteLog.psd1') -Force } | Should -Not -Throw
+            { Import-Module -Name (Join-Path $PSScriptRoot '../src/MEMZone.WriteLog/MEMZone.WriteLog.psd1') -Force } | Should -Not -Throw
         }
 
         It 'Should be loaded' {
-            Get-Module -Name PSWriteLog | Should -Not -BeNullOrEmpty
+            Get-Module -Name MEMZone.WriteLog | Should -Not -BeNullOrEmpty
         }
     }
 
@@ -47,11 +47,11 @@ Describe 'Module: PSWriteLog' {
             'Invoke-WithAnimation'
             'Invoke-WithStatus'
         ) {
-            (Get-Command -Module PSWriteLog -Name $_ -ErrorAction SilentlyContinue) | Should -Not -BeNullOrEmpty
+            (Get-Command -Module MEMZone.WriteLog -Name $_ -ErrorAction SilentlyContinue) | Should -Not -BeNullOrEmpty
         }
 
         It 'Should not export unexpected functions' {
-            $ExportedCount = (Get-Command -Module PSWriteLog).Count
+            $ExportedCount = (Get-Command -Module MEMZone.WriteLog).Count
             $ExportedCount | Should -Be 8
         }
     }
