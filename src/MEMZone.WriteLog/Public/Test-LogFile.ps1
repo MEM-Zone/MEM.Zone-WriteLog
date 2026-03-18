@@ -21,11 +21,11 @@ function Test-LogFile {
 .LINK
     https://MEM.Zone
 .LINK
-    https://MEMZ.one/PSWriteLog
+    https://MEMZ.one/WriteLog
 .LINK
-    https://MEMZ.one/PSWriteLog-GIT
+    https://MEMZ.one/WriteLog-GIT
 .LINK
-    https://MEMZ.one/PSWriteLog-ISSUES
+    https://MEMZ.one/WriteLog-ISSUES
 .COMPONENT
     Script Logging
 .FUNCTIONALITY

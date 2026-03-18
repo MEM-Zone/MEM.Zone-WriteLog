@@ -1,7 +1,7 @@
-function Initialize-PSWriteLog {
+function Initialize-WriteLog {
 <#
 .SYNOPSIS
-    Initializes the PSWriteLog module state.
+    Initializes the MEMZone.WriteLog module state.
 .DESCRIPTION
     Configures logging parameters including log file path, console output preference,
     debug message logging, and maximum log file size. Automatically creates the log
@@ -17,9 +17,9 @@ function Initialize-PSWriteLog {
 .PARAMETER LogMaxSizeMB
     Maximum log file size in MB before rotation. Default: 5.
 .EXAMPLE
-    Initialize-PSWriteLog -LogName 'MyScript' -LogPath 'C:\Logs\MyScript'
+    Initialize-WriteLog -LogName 'MyScript' -LogPath 'C:\Logs\MyScript'
 .EXAMPLE
-    Initialize-PSWriteLog -LogName 'MyScript' -LogPath 'C:\Logs\MyScript' -LogToConsole $false -LogDebugMessages $true
+    Initialize-WriteLog -LogName 'MyScript' -LogPath 'C:\Logs\MyScript' -LogToConsole $false -LogDebugMessages $true
 .INPUTS
     None
 .OUTPUTS
@@ -29,11 +29,11 @@ function Initialize-PSWriteLog {
 .LINK
     https://MEM.Zone
 .LINK
-    https://MEMZ.one/PSWriteLog
+    https://MEMZ.one/WriteLog
 .LINK
-    https://MEMZ.one/PSWriteLog-GIT
+    https://MEMZ.one/WriteLog-GIT
 .LINK
-    https://MEMZ.one/PSWriteLog-ISSUES
+    https://MEMZ.one/WriteLog-ISSUES
 .COMPONENT
     Script Logging
 .FUNCTIONALITY

@@ -1,9 +1,9 @@
 # MEMZone.WriteLog
 
-[![CI](https://github.com/MEM-Zone/MEM.Zone-PSWriteLog/actions/workflows/ci.yml/badge.svg)](https://github.com/MEM-Zone/MEM.Zone-PSWriteLog/actions/workflows/ci.yml)
+[![CI](https://github.com/MEM-Zone/MEM.Zone-WriteLog/actions/workflows/ci.yml/badge.svg)](https://github.com/MEM-Zone/MEM.Zone-WriteLog/actions/workflows/ci.yml)
 [![PSGallery Version](https://img.shields.io/powershellgallery/v/MEMZone.WriteLog.svg)](https://www.powershellgallery.com/packages/MEMZone.WriteLog)
 [![PSGallery Downloads](https://img.shields.io/powershellgallery/dt/MEMZone.WriteLog.svg)](https://www.powershellgallery.com/packages/MEMZone.WriteLog)
-[![License](https://img.shields.io/github/license/MEM-Zone/MEM.Zone-PSWriteLog.svg)](LICENSE)
+[![License](https://img.shields.io/github/license/MEM-Zone/MEM.Zone-WriteLog.svg)](LICENSE)
 
 Structured PowerShell logging with dual console/file output, rich text formatting, animated progress indicators, and debug-level function tracing.
 
@@ -29,8 +29,8 @@ Install-Module -Name MEMZone.WriteLog -Scope CurrentUser
 Clone the repository and import the module directly:
 
 ```powershell
-git clone https://github.com/MEM-Zone/MEM.Zone-PSWriteLog.git
-Import-Module ./MEM.Zone-PSWriteLog/src/MEMZone.WriteLog/MEMZone.WriteLog.psd1
+git clone https://github.com/MEM-Zone/MEM.Zone-WriteLog.git
+Import-Module ./MEM.Zone-WriteLog/src/MEMZone.WriteLog/MEMZone.WriteLog.psd1
 ```
 
 ## Quick Start
@@ -39,7 +39,7 @@ Import-Module ./MEM.Zone-PSWriteLog/src/MEMZone.WriteLog/MEMZone.WriteLog.psd1
 Import-Module MEMZone.WriteLog
 
 # Initialize logging
-Initialize-PSWriteLog -LogName 'MyScript' -LogPath 'C:\Logs\MyScript'
+Initialize-WriteLog -LogName 'MyScript' -LogPath 'C:\Logs\MyScript'
 
 # Write messages with different formatting
 Write-Log -Message 'Operation completed successfully'
@@ -76,7 +76,7 @@ Write-LogBuffer
 
 | Function | Description |
 |---|---|
-| `Initialize-PSWriteLog` | Configure logging (path, console output, debug, rotation size) |
+| `Initialize-WriteLog` | Configure logging (path, console output, debug, rotation size) |
 | `Write-Log` | Write a structured log entry with severity and formatting |
 | `Write-LogBuffer` | Flush the in-memory buffer to the log file |
 | `Test-LogFile` | Ensure log directory/file exist; rotate if oversized |

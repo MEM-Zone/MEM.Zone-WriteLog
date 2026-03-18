@@ -28,7 +28,7 @@
 
     # Functions to export from this module
     FunctionsToExport = @(
-        'Initialize-PSWriteLog'
+        'Initialize-WriteLog'
         'Test-LogFile'
         'Write-LogBuffer'
         'Write-Log'
@@ -47,10 +47,10 @@
     PrivateData       = @{
         PSData = @{
             Tags         = @('Logging', 'Log', 'Write-Log', 'Console', 'Formatting', 'Animation', 'Progress', 'Table', 'PSEdition_Desktop', 'PSEdition_Core', 'Windows')
-            LicenseUri   = 'https://github.com/MEM-Zone/MEM.Zone-PSWriteLog/blob/main/LICENSE'
-            ProjectUri   = 'https://github.com/MEM-Zone/MEM.Zone-PSWriteLog'
+            LicenseUri   = 'https://github.com/MEM-Zone/MEM.Zone-WriteLog/blob/main/LICENSE'
+            ProjectUri   = 'https://github.com/MEM-Zone/MEM.Zone-WriteLog'
             IconUri      = 'https://raw.githubusercontent.com/MEM-Zone/MEM-Zone.github.io/master/media/MEM.Zone-Logo.png'
-            ReleaseNotes = 'https://github.com/MEM-Zone/MEM.Zone-PSWriteLog/blob/main/docs/CHANGELOG.md'
+            ReleaseNotes = 'https://github.com/MEM-Zone/MEM.Zone-WriteLog/blob/main/docs/CHANGELOG.md'
         }
     }
 }

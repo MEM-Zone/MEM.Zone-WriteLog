@@ -26,7 +26,7 @@ Describe 'Module: MEMZone.WriteLog' {
 
         BeforeAll {
             $ExpectedFunctions = @(
-                'Initialize-PSWriteLog'
+                'Initialize-WriteLog'
                 'Test-LogFile'
                 'Write-LogBuffer'
                 'Write-Log'
@@ -38,7 +38,7 @@ Describe 'Module: MEMZone.WriteLog' {
         }
 
         It "Should export '<_>'" -ForEach @(
-            'Initialize-PSWriteLog'
+            'Initialize-WriteLog'
             'Test-LogFile'
             'Write-LogBuffer'
             'Write-Log'
@@ -59,7 +59,7 @@ Describe 'Module: MEMZone.WriteLog' {
     Context 'Function Help' {
 
         It "Should have help for '<_>'" -ForEach @(
-            'Initialize-PSWriteLog'
+            'Initialize-WriteLog'
             'Test-LogFile'
             'Write-LogBuffer'
             'Write-Log'
@@ -75,10 +75,10 @@ Describe 'Module: MEMZone.WriteLog' {
     }
 }
 
-Describe 'Initialize-PSWriteLog' {
+Describe 'Initialize-WriteLog' {
 
     BeforeAll {
-        $TestLogPath = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "PSWriteLog_Test_$([guid]::NewGuid().ToString('N'))"
+        $TestLogPath = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "WriteLog_Test_$([guid]::NewGuid().ToString('N'))"
     }
 
     AfterAll {
@@ -88,7 +88,7 @@ Describe 'Initialize-PSWriteLog' {
     }
 
     It 'Should initialize without errors' {
-        { Initialize-PSWriteLog -LogName 'TestLog' -LogPath $TestLogPath } | Should -Not -Throw
+        { Initialize-WriteLog -LogName 'TestLog' -LogPath $TestLogPath } | Should -Not -Throw
     }
 
     It 'Should create the log directory' {
@@ -101,25 +101,25 @@ Describe 'Initialize-PSWriteLog' {
     }
 
     It 'Should accept custom LogToConsole setting' {
-        { Initialize-PSWriteLog -LogName 'TestLog' -LogPath $TestLogPath -LogToConsole $false } | Should -Not -Throw
+        { Initialize-WriteLog -LogName 'TestLog' -LogPath $TestLogPath -LogToConsole $false } | Should -Not -Throw
     }
 
     It 'Should accept custom LogDebugMessages setting' {
-        { Initialize-PSWriteLog -LogName 'TestLog' -LogPath $TestLogPath -LogDebugMessages $true } | Should -Not -Throw
+        { Initialize-WriteLog -LogName 'TestLog' -LogPath $TestLogPath -LogDebugMessages $true } | Should -Not -Throw
     }
 
     It 'Should accept custom LogMaxSizeMB setting' {
-        { Initialize-PSWriteLog -LogName 'TestLog' -LogPath $TestLogPath -LogMaxSizeMB 10 } | Should -Not -Throw
+        { Initialize-WriteLog -LogName 'TestLog' -LogPath $TestLogPath -LogMaxSizeMB 10 } | Should -Not -Throw
     }
 
     It 'Should reject LogMaxSizeMB outside valid range' {
-        { Initialize-PSWriteLog -LogName 'TestLog' -LogPath $TestLogPath -LogMaxSizeMB 0 } | Should -Throw
-        { Initialize-PSWriteLog -LogName 'TestLog' -LogPath $TestLogPath -LogMaxSizeMB 101 } | Should -Throw
+        { Initialize-WriteLog -LogName 'TestLog' -LogPath $TestLogPath -LogMaxSizeMB 0 } | Should -Throw
+        { Initialize-WriteLog -LogName 'TestLog' -LogPath $TestLogPath -LogMaxSizeMB 101 } | Should -Throw
     }
 
     It 'Should reset the log buffer on re-initialization' {
         Write-Log -Message 'Before re-init' -SkipLogFormatting
-        Initialize-PSWriteLog -LogName 'TestLog' -LogPath $TestLogPath -LogToConsole $false
+        Initialize-WriteLog -LogName 'TestLog' -LogPath $TestLogPath -LogToConsole $false
         # Buffer should be empty after re-initialization (new ArrayList created)
         # Verify by flushing - should not add the old entry to the new log
         $LogFile = Join-Path -Path $TestLogPath -ChildPath 'TestLog.log'
@@ -133,8 +133,8 @@ Describe 'Initialize-PSWriteLog' {
 Describe 'Write-Log' {
 
     BeforeAll {
-        $TestLogPath = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "PSWriteLog_WriteLog_$([guid]::NewGuid().ToString('N'))"
-        Initialize-PSWriteLog -LogName 'WriteLogTest' -LogPath $TestLogPath -LogToConsole $false
+        $TestLogPath = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "WriteLog_WriteLog_$([guid]::NewGuid().ToString('N'))"
+        Initialize-WriteLog -LogName 'WriteLogTest' -LogPath $TestLogPath -LogToConsole $false
     }
 
     AfterAll {
@@ -229,7 +229,7 @@ Describe 'Write-Log' {
     Context 'Debug Messages' {
 
         It 'Should not log debug messages when LogDebugMessages is disabled' {
-            Initialize-PSWriteLog -LogName 'WriteLogTest' -LogPath $TestLogPath -LogToConsole $false -LogDebugMessages $false
+            Initialize-WriteLog -LogName 'WriteLogTest' -LogPath $TestLogPath -LogToConsole $false -LogDebugMessages $false
             $LogFile = Join-Path -Path $TestLogPath -ChildPath 'WriteLogTest.log'
             Set-Content -Path $LogFile -Value '' -Force
             Write-Log -Message 'Debug only' -DebugMessage -SkipLogFormatting
@@ -239,7 +239,7 @@ Describe 'Write-Log' {
         }
 
         It 'Should log debug messages when LogDebugMessages is enabled' {
-            Initialize-PSWriteLog -LogName 'WriteLogTest' -LogPath $TestLogPath -LogToConsole $false -LogDebugMessages $true
+            Initialize-WriteLog -LogName 'WriteLogTest' -LogPath $TestLogPath -LogToConsole $false -LogDebugMessages $true
             $LogFile = Join-Path -Path $TestLogPath -ChildPath 'WriteLogTest.log'
             Set-Content -Path $LogFile -Value '' -Force
             Write-Log -Message 'Debug visible' -DebugMessage -SkipLogFormatting
@@ -249,7 +249,7 @@ Describe 'Write-Log' {
         }
 
         It 'Should include source in debug log entry when provided' {
-            Initialize-PSWriteLog -LogName 'WriteLogTest' -LogPath $TestLogPath -LogToConsole $false -LogDebugMessages $true
+            Initialize-WriteLog -LogName 'WriteLogTest' -LogPath $TestLogPath -LogToConsole $false -LogDebugMessages $true
             $LogFile = Join-Path -Path $TestLogPath -ChildPath 'WriteLogTest.log'
             Set-Content -Path $LogFile -Value '' -Force
             Write-Log -Message 'Source test' -Source 'MyFunction' -DebugMessage -SkipLogFormatting
@@ -262,7 +262,7 @@ Describe 'Write-Log' {
     Context 'Formatting Integration' {
 
         BeforeAll {
-            Initialize-PSWriteLog -LogName 'WriteLogTest' -LogPath $TestLogPath -LogToConsole $false
+            Initialize-WriteLog -LogName 'WriteLogTest' -LogPath $TestLogPath -LogToConsole $false
         }
 
         It 'Should default to Timeline format when no FormatOptions provided' {
@@ -288,8 +288,8 @@ Describe 'Write-Log' {
 Describe 'Write-LogBuffer' {
 
     BeforeAll {
-        $TestLogPath = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "PSWriteLog_Buffer_$([guid]::NewGuid().ToString('N'))"
-        Initialize-PSWriteLog -LogName 'BufferTest' -LogPath $TestLogPath -LogToConsole $false
+        $TestLogPath = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "WriteLog_Buffer_$([guid]::NewGuid().ToString('N'))"
+        Initialize-WriteLog -LogName 'BufferTest' -LogPath $TestLogPath -LogToConsole $false
     }
 
     AfterAll {
@@ -583,7 +583,7 @@ Describe 'Format-Message' {
 Describe 'Test-LogFile' {
 
     BeforeAll {
-        $TestDir = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "PSWriteLog_TestLogFile_$([guid]::NewGuid().ToString('N'))"
+        $TestDir = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "WriteLog_TestLogFile_$([guid]::NewGuid().ToString('N'))"
     }
 
     AfterAll {
@@ -696,8 +696,8 @@ Describe 'Test-LogFile' {
 Describe 'Write-FunctionHeaderOrFooter' {
 
     BeforeAll {
-        $TestLogPath = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "PSWriteLog_FHF_$([guid]::NewGuid().ToString('N'))"
-        Initialize-PSWriteLog -LogName 'FHFTest' -LogPath $TestLogPath -LogToConsole $false -LogDebugMessages $true
+        $TestLogPath = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "WriteLog_FHF_$([guid]::NewGuid().ToString('N'))"
+        Initialize-WriteLog -LogName 'FHFTest' -LogPath $TestLogPath -LogToConsole $false -LogDebugMessages $true
     }
 
     AfterAll {
@@ -802,8 +802,8 @@ Describe 'Write-FunctionHeaderOrFooter' {
 Describe 'Invoke-WithAnimation' {
 
     BeforeAll {
-        $TestLogPath = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "PSWriteLog_Anim_$([guid]::NewGuid().ToString('N'))"
-        Initialize-PSWriteLog -LogName 'AnimTest' -LogPath $TestLogPath -LogToConsole $false
+        $TestLogPath = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "WriteLog_Anim_$([guid]::NewGuid().ToString('N'))"
+        Initialize-WriteLog -LogName 'AnimTest' -LogPath $TestLogPath -LogToConsole $false
     }
 
     AfterAll {
@@ -856,8 +856,8 @@ Describe 'Invoke-WithAnimation' {
 Describe 'Invoke-WithStatus' {
 
     BeforeAll {
-        $TestLogPath = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "PSWriteLog_Status_$([guid]::NewGuid().ToString('N'))"
-        Initialize-PSWriteLog -LogName 'StatusTest' -LogPath $TestLogPath -LogToConsole $false
+        $TestLogPath = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "WriteLog_Status_$([guid]::NewGuid().ToString('N'))"
+        Initialize-WriteLog -LogName 'StatusTest' -LogPath $TestLogPath -LogToConsole $false
     }
 
     AfterAll {

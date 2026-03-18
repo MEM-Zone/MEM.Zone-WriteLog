@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `Initialize-PSWriteLog` - Module initialization with configurable log path, console output, debug logging, and size-based rotation.
+- `Initialize-WriteLog` - Module initialization with configurable log path, console output, debug logging, and size-based rotation.
 - `Write-Log` - Structured logging with severity levels, dual console/file output, and rich formatting support.
 - `Write-LogBuffer` - Buffered log flushing for improved I/O performance.
 - `Test-LogFile` - Log directory/file creation and size-based rotation.
