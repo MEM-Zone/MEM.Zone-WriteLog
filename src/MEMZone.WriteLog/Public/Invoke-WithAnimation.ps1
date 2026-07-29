@@ -3,23 +3,31 @@ function Invoke-WithAnimation {
 .SYNOPSIS
     Executes a scriptblock while displaying an animated progress indicator.
 .DESCRIPTION
-    Runs the specified scriptblock in a background runspace and displays an animated
-    spinner/progress indicator on the console. When the operation completes, shows a
-    success or failure indicator. Also logs the operation to the log file via Write-Log.
+    Runs the specified scriptblock and displays an animated spinner/progress indicator on the console.
+    When the operation completes, shows a success or failure indicator. Also logs the operation to the
+    log file via Write-Log.
 
-    Cross-Runspace Execution Model:
-    The scriptblock retains its creation SessionState, so when invoked via & in the
-    background runspace, PowerShell executes it in the ORIGINAL session state. This
-    gives the scriptblock access to the caller's variables and imported modules
-    (e.g., ConfigMgr cmdlets). For explicit variable passing, use the -Variables
-    parameter to inject variables directly into the runspace.
+    Execution Model:
+    The scriptblock runs on the CALLING thread, in the caller's session state, so it resolves the
+    caller's variables, functions and modules exactly as inline code would. Only the animation itself
+    is pushed to a background runspace, where it touches nothing but the console and its own state.
+
+    This split matters. A scriptblock keeps the SessionState it was created in, so running it in a
+    background runspace would execute it in the caller's session state from a second thread - two
+    threads sharing one scope stack, which corrupts variable lookups in whichever one loses the race.
+    Animating in the background instead of the work keeps the shared session state single-threaded.
+
+    The scriptblock should not write console output itself - the animation stops as soon as it
+    detects another writer, but the in-place indicator may then finish on a different line.
 .PARAMETER Message
     The message to display alongside the animation.
 .PARAMETER ScriptBlock
     The scriptblock to execute while showing the animation.
 .PARAMETER Variables
-    Optional hashtable of variables to explicitly inject into the background runspace.
-    Use this when session state binding is insufficient or for improved clarity.
+    Optional hashtable of variables to make available to the scriptblock (injected via
+    InvokeWithContext, so it works from both script and module contexts). The scriptblock already
+    sees the caller's variables, so this is only needed to pass values it would not otherwise
+    resolve, or to state the inputs explicitly for readability.
 .PARAMETER Animation
     The animation style to use. Valid values: Spinner, Dots, Braille, Bounce, Box.
     Default: Dots
@@ -40,7 +48,8 @@ function Invoke-WithAnimation {
 .OUTPUTS
     Returns the output of the ScriptBlock.
 .NOTES
-    This is an internal script function and should typically not be called directly.
+    Session-bound operations (Import-Module, New-PSDrive, Set-Location) work inside the scriptblock
+    because it runs on the calling thread in the caller's session state.
 .LINK
     https://MEM.Zone
 .LINK
@@ -91,119 +100,154 @@ function Invoke-WithAnimation {
         }
 
         $Frames = $AnimationFrames[$Animation]
-        $FrameIndex = 0
         $Success = $true
-        $ErrorMessage = $null
+        $ErrorRecord = $null
         $Result = $null
     }
 
     process {
 
-        ## If console output disabled, just run without animation
-        if (-not $Script:LogToConsole) {
+        ## Make the requested variables available to the scriptblock via InvokeWithContext, which
+        ## injects them into the scriptblock's own session state. Unlike Set-Variable -Scope Local,
+        ## this also works from inside a module - a module function's local scope is invisible to a
+        ## scriptblock bound to the caller's session state.
+        [System.Collections.Generic.List[psvariable]]$VariableList = [System.Collections.Generic.List[psvariable]]::new()
+        if ($Variables -and $Variables.Count -gt 0) {
+            foreach ($Entry in $Variables.GetEnumerator()) {
+                $VariableList.Add([psvariable]::new($Entry.Key, $Entry.Value))
+            }
+        }
+
+        ## If console output is disabled or the host cannot position the cursor, run without animation
+        if (-not $Script:LogToConsole -or -not (Test-ConsoleInteractive)) {
             Write-Log -Message "$Message..." -Console:$false
             try {
-                $Result = & $ScriptBlock
+                $Result = if ($VariableList.Count -gt 0) { $ScriptBlock.InvokeWithContext($null, $VariableList, $null) } else { & $ScriptBlock }
             }
             catch {
-                $Success = $false
-                $ErrorMessage = $PSItem.Exception.Message
+                ## Log the outcome so non-interactive runs keep failure records too, then rethrow
+                Write-Log -Message "$Message - Failed: $($PSItem.Exception.Message)" -Severity 'Error' -Console:$false
                 throw
             }
             return $Result
         }
 
-        ## Write initial message without newline
+        ## Write initial message without newline and save the cursor position for the animation
         Write-Host "    - $Message " -NoNewline -ForegroundColor 'Yellow'
-
-        ## Save cursor position for animation
         $AnimationLeft = [Console]::CursorLeft
         $AnimationTop = [Console]::CursorTop
-        Write-Host "$($Frames[0])" -NoNewline -ForegroundColor 'Cyan'
-        $FrameIndex = 1
 
-        ## Start background runspace
+        ## Start the animation in a background runspace. It is handed only value types and the frame
+        ## list, so it never reaches into the caller's session state.
+        $StopSignal = [System.Threading.ManualResetEventSlim]::new($false)
         $Runspace = [runspacefactory]::CreateRunspace()
         $Runspace.Open()
-        $Runspace.SessionStateProxy.SetVariable('ScriptBlock', $ScriptBlock)
-
-        if ($Variables -and $Variables.Count -gt 0) {
-            foreach ($Entry in $Variables.GetEnumerator()) {
-                $Runspace.SessionStateProxy.SetVariable($Entry.Key, $Entry.Value)
-            }
-        }
+        $Runspace.SessionStateProxy.SetVariable('Frames', $Frames)
+        $Runspace.SessionStateProxy.SetVariable('AnimationLeft', $AnimationLeft)
+        $Runspace.SessionStateProxy.SetVariable('AnimationTop', $AnimationTop)
+        $Runspace.SessionStateProxy.SetVariable('RefreshRate', $RefreshRate)
+        $Runspace.SessionStateProxy.SetVariable('StopSignal', $StopSignal)
 
         $PowerShell = [powershell]::Create()
         $PowerShell.Runspace = $Runspace
         $null = $PowerShell.AddScript({
-            try {
-                $Result = & $ScriptBlock
-                @{ Success = $true; Result = $Result; Error = $null }
-            }
-            catch {
-                @{ Success = $false; Result = $null; Error = $PSItem.Exception.Message }
-            }
-        })
+            $FrameIndex = 0
+            $ExpectedLeft = -1
+            $ExpectedTop = -1
+            while (-not $StopSignal.IsSet) {
+                try {
 
-        ## Use input/output buffers to capture streams and prevent console interference
-        $InputBuffer = [System.Management.Automation.PSDataCollection[PSObject]]::new()
-        $OutputBuffer = [System.Management.Automation.PSDataCollection[PSObject]]::new()
-        $AsyncResult = $PowerShell.BeginInvoke($InputBuffer, $OutputBuffer)
+                    ## If another writer moved the cursor since the last frame, the saved coordinates
+                    ## are stale - stop animating instead of painting frames over foreign output
+                    if ($ExpectedTop -ge 0 -and ([Console]::CursorTop -ne $ExpectedTop -or [Console]::CursorLeft -ne $ExpectedLeft)) { break }
 
-        ## Animate while waiting for completion - use .NET methods to avoid cmdlet resolution issues
-        try {
-            while (-not $AsyncResult.IsCompleted) {
-                [Console]::SetCursorPosition($AnimationLeft, $AnimationTop)
-                [Console]::ForegroundColor = 'Cyan'
-                [Console]::Write($Frames[$FrameIndex])
-                [Console]::ResetColor()
+                    ## Save and restore the foreground color instead of resetting it, so a color set
+                    ## by the main thread between frames is not clobbered
+                    $PreviousColor = [Console]::ForegroundColor
+                    [Console]::SetCursorPosition($AnimationLeft, $AnimationTop)
+                    [Console]::ForegroundColor = 'Cyan'
+                    [Console]::Write($Frames[$FrameIndex])
+                    [Console]::ForegroundColor = $PreviousColor
+                    $ExpectedLeft = [Console]::CursorLeft
+                    $ExpectedTop = [Console]::CursorTop
+                }
+                catch {
+                    ## The console went away (resized, redirected, closed) - stop animating quietly
+                    break
+                }
                 $FrameIndex = ($FrameIndex + 1) % $Frames.Count
                 [System.Threading.Thread]::Sleep($RefreshRate)
             }
+        })
+        $AsyncResult = $PowerShell.BeginInvoke()
 
-            ## Get the result from output buffer
-            $null = $PowerShell.EndInvoke($AsyncResult)
-            if ($OutputBuffer -and $OutputBuffer.Count -gt 0) {
-                $Success = $OutputBuffer[0].Success
-                $Result = $OutputBuffer[0].Result
-                $ErrorMessage = $OutputBuffer[0].Error
+        ## Suppress progress bars for the duration. Cmdlets like Invoke-WebRequest render progress
+        ## through the host, which repaints and scrolls the console and would move the animation off
+        ## its saved cursor position. Set at global scope (and restored in finally) so it also
+        ## reaches the scriptblock's own scope chain when this function runs from inside a module.
+        $PreviousProgressPreference = $global:ProgressPreference
+        $global:ProgressPreference = 'SilentlyContinue'
+
+        ## Run the actual work on THIS thread, in the caller's session state. Nothing is marshalled
+        ## across a runspace boundary, so results, errors and variable lookups all behave normally.
+        try {
+            $Result = if ($VariableList.Count -gt 0) { $ScriptBlock.InvokeWithContext($null, $VariableList, $null) } else { & $ScriptBlock }
+        }
+        catch {
+            $Success = $false
+            $ErrorRecord = $PSItem
+
+            ## InvokeWithContext surfaces scriptblock errors wrapped in a MethodInvocationException -
+            ## unwrap so the caller gets the original ErrorRecord back
+            if ($PSItem.Exception -is [System.Management.Automation.MethodInvocationException] -and $PSItem.Exception.InnerException -is [System.Management.Automation.IContainsErrorRecord]) {
+                $ErrorRecord = $PSItem.Exception.InnerException.ErrorRecord
             }
+        }
+        finally {
 
-            ## Show completion indicator BEFORE runspace disposal - use .NET methods
-            [Console]::SetCursorPosition($AnimationLeft, $AnimationTop)
-            [Console]::Write('   ')
-            [Console]::SetCursorPosition($AnimationLeft, $AnimationTop)
+            ## Restore progress rendering and stop the animation
+            $global:ProgressPreference = $PreviousProgressPreference
+            $StopSignal.Set()
+            try { $null = $PowerShell.EndInvoke($AsyncResult) } catch { Write-Debug -Message "Animation runspace cleanup: $($PSItem.Exception.Message)" }
+            $PowerShell.Dispose()
+            $Runspace.Close()
+            $Runspace.Dispose()
+            $StopSignal.Dispose()
+        }
+
+        ## Show the completion indicator in place of the last animation frame. If the scriptblock
+        ## wrote console output (or scrolled the buffer), the saved coordinates are stale - finish
+        ## on the current line instead of overpainting whatever is there now.
+        try {
+            if ([Console]::CursorTop -eq $AnimationTop -and [Console]::CursorLeft -ge $AnimationLeft) {
+                [Console]::SetCursorPosition($AnimationLeft, $AnimationTop)
+                [Console]::Write('   ')
+                [Console]::SetCursorPosition($AnimationLeft, $AnimationTop)
+            }
             if ($Success) {
                 [Console]::ForegroundColor = 'Green'
                 [Console]::WriteLine($SuccessIndicator)
-                [Console]::ResetColor()
             }
             else {
                 [Console]::ForegroundColor = 'Red'
                 [Console]::WriteLine($FailureIndicator)
-                [Console]::ResetColor()
             }
+            [Console]::ResetColor()
         }
-        finally {
-            ## Clean up runspace
-            [System.Threading.Thread]::Sleep(50)
-            $PowerShell.Dispose()
-            $Runspace.Close()
-            $Runspace.Dispose()
+        catch {
+            Write-Host ''
         }
 
-        ## Log to file AFTER runspace cleanup (Write-Log is safe now)
+        ## Log the outcome
         if ($Success) {
             Write-Log -Message "$Message" -Console:$false
         }
         else {
-            Write-Log -Message "$Message - Failed: $ErrorMessage" -Severity 'Error' -Console:$false
+            Write-Log -Message "$Message - Failed: $($ErrorRecord.Exception.Message)" -Severity 'Error' -Console:$false
         }
 
-        ## Return result or throw error
-        if (-not $Success -and $ErrorMessage) {
-            throw $ErrorMessage
-        }
+        ## Rethrow the original ErrorRecord so the caller keeps the exception type and stack
+        if (-not $Success) { throw $ErrorRecord }
 
         return $Result
     }

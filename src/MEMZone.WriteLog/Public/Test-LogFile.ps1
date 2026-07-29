@@ -6,10 +6,13 @@ function Test-LogFile {
     Checks if the log path exists and creates the folder and file if needed.
     Checks if the log file exceeds the maximum specified size and rotates it by
     renaming the current file with a timestamp suffix (e.g., Application_20250114-153000.log).
+    Rotated archives are pruned, keeping only the newest MaxArchives files.
 .PARAMETER LogFile
     Specifies the path to the log file.
 .PARAMETER MaxSizeMB
     Specifies the maximum size in MB before the log file is rotated.
+.PARAMETER MaxArchives
+    Specifies how many rotated archive files to keep. Older archives are deleted. Default: 10.
 .EXAMPLE
     Test-LogFile -LogFile 'C:\Logs\Application.log' -MaxSizeMB 5
 .INPUTS
@@ -40,7 +43,11 @@ function Test-LogFile {
 
         [Parameter(Mandatory = $true, Position = 1)]
         [ValidateRange(1, 100)]
-        [int]$MaxSizeMB
+        [int]$MaxSizeMB,
+
+        [Parameter(Mandatory = $false, Position = 2)]
+        [ValidateRange(1, 100)]
+        [int]$MaxArchives = 10
     )
 
     process {
@@ -90,6 +97,12 @@ function Test-LogFile {
                 [string]$RotationMessage = "$CurrentTimestamp [Information] Log file rotated. Previous log archived to [$ArchiveName]"
                 $null = New-Item -Path $LogFile -ItemType File -Force -ErrorAction Stop
                 Set-Content -Path $LogFile -Value $RotationMessage -Encoding UTF8 -Force -ErrorAction Stop
+
+                ## Prune old archives so rotation cannot grow unbounded - keep the newest $MaxArchives
+                [array]$Archives = @(Get-ChildItem -Path $LogPath -Filter "${BaseName}_*${Extension}" -File -ErrorAction SilentlyContinue | Sort-Object -Property LastWriteTime -Descending)
+                if ($Archives.Count -gt $MaxArchives) {
+                    $Archives | Select-Object -Skip $MaxArchives | Remove-Item -Force -ErrorAction SilentlyContinue
+                }
             }
         }
         catch {
