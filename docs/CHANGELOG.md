@@ -5,6 +5,27 @@ All notable changes to the **MEMZone.WriteLog** module will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-07-29
+
+### Changed
+
+- `Invoke-WithAnimation` execution model reversed: the scriptblock now runs on the **calling thread** in the caller's session state, and only the spinner runs in a background runspace. Previously the scriptblock ran in a background runspace while bound to the caller's session state — two threads sharing one scope stack, which can corrupt variable lookups. Session-bound operations (`Import-Module`, `New-PSDrive`, `Set-Location`) now work inside the scriptblock.
+- `-Variables` is now injected via `InvokeWithContext` into the scriptblock's own session state. Previously the values were set on the animation runspace, which a session-bound scriptblock never resolved.
+- `Invoke-WithAnimation` and `Invoke-WithStatus` now rethrow the original `ErrorRecord` (exception type and stack preserved) instead of throwing the error message as a string.
+- `Invoke-WithStatus` documentation corrected: both helpers run the scriptblock in the main session; the difference is only the spinner.
+- Progress bars are suppressed for the duration of the animation (set globally, restored afterwards) so cmdlet progress rendering cannot scroll the animation off its saved cursor position.
+
+### Added
+
+- Private `Test-ConsoleInteractive` helper — detects redirected output, missing consoles (services, task sequences), and the ISE; `Invoke-WithAnimation` and `Invoke-WithStatus` now fall back to plain logging in those hosts instead of throwing on cursor positioning.
+- `Test-LogFile -MaxArchives` (default 10) — rotated log archives are now pruned instead of accumulating forever.
+- The animation stops itself when another writer moves the console cursor, instead of painting frames over foreign output; the completion indicator falls back to the current line when the saved coordinates are stale.
+- Failure outcomes are now logged on the non-interactive code paths of both helpers.
+
+### Fixed
+
+- Console foreground color race between animation frames and main-thread output — frames now save and restore the color instead of resetting it.
+
 ## [2.0.8] - 2026-03-27
 
 ### Changed

@@ -3,9 +3,10 @@ function Invoke-WithStatus {
 .SYNOPSIS
     Executes a scriptblock synchronously with status indicator (no animation).
 .DESCRIPTION
-    Runs the specified scriptblock in the CURRENT session (not a runspace) and displays
-    a success or failure indicator. Use this for operations that must run in the main
-    session (e.g., Import-Module, New-PSDrive, Set-Location for ConfigMgr).
+    Runs the specified scriptblock synchronously and displays a success or failure indicator.
+    Like Invoke-WithAnimation, the scriptblock runs on the calling thread in the caller's
+    session state - the only difference is that no animation thread is started. Use it for
+    operations that are too quick to animate or where a spinner is unwanted.
 .PARAMETER Message
     The message to display alongside the status.
 .PARAMETER ScriptBlock
@@ -21,7 +22,9 @@ function Invoke-WithStatus {
 .OUTPUTS
     Returns the output of the ScriptBlock.
 .NOTES
-    Use this instead of Invoke-WithAnimation when the operation must run in the main session.
+    Both this function and Invoke-WithAnimation run the scriptblock in the main session, so
+    session-bound operations (Import-Module, New-PSDrive, Set-Location) work in either.
+    Prefer this one for near-instant operations where animation frames would only flicker.
 .LINK
     https://MEM.Zone
 .LINK
@@ -52,14 +55,16 @@ function Invoke-WithStatus {
 
     process {
 
-        ## If console output disabled, just run without status display
-        if (-not $Script:LogToConsole) {
+        ## If console output is disabled or the host has no console, just run without status display
+        if (-not $Script:LogToConsole -or -not (Test-ConsoleInteractive)) {
             Write-Log -Message "$Message" -Console:$false
             try {
                 $Result = & $ScriptBlock
                 return $Result
             }
             catch {
+                ## Log the outcome so non-interactive runs keep failure records too, then rethrow
+                Write-Log -Message "$Message - Failed: $($PSItem.Exception.Message)" -Severity 'Error' -Console:$false
                 throw
             }
         }
@@ -71,7 +76,7 @@ function Invoke-WithStatus {
 
         ## Execute scriptblock synchronously in current session
         $Success = $true
-        $ErrorMessage = $null
+        $ErrorRecord = $null
         $Result = $null
 
         try {
@@ -79,7 +84,7 @@ function Invoke-WithStatus {
         }
         catch {
             $Success = $false
-            $ErrorMessage = $PSItem.Exception.Message
+            $ErrorRecord = $PSItem
         }
 
         ## Show result indicator
@@ -93,8 +98,10 @@ function Invoke-WithStatus {
             [Console]::ForegroundColor = 'Red'
             [Console]::WriteLine($FailureIndicator)
             [Console]::ResetColor()
-            Write-Log -Message "$Message - Failed: $ErrorMessage" -Severity 'Error' -Console:$false
-            throw $ErrorMessage
+            Write-Log -Message "$Message - Failed: $($ErrorRecord.Exception.Message)" -Severity 'Error' -Console:$false
+
+            ## Rethrow the original ErrorRecord so the caller keeps the exception type and stack
+            throw $ErrorRecord
         }
 
         return $Result

@@ -65,7 +65,7 @@ if ('Analyze' -in $Task) {
     $AnalyzerResults = Invoke-ScriptAnalyzer -Path $ModuleSourcePath -Recurse -Settings PSGallery -Severity @('Error', 'Warning')
 
     if ($AnalyzerResults) {
-        Write-Host "`n  PSScriptAnalyzer found $($AnalyzerResults.Count) issue(s):" -ForegroundColor Red
+        Write-Host "`n  PSScriptAnalyzer found $(@($AnalyzerResults).Count) issue(s):" -ForegroundColor Red
         $AnalyzerResults | Format-Table -Property Severity, RuleName, ScriptName, Line, Message -AutoSize -Wrap
         throw 'PSScriptAnalyzer validation failed.'
     }
