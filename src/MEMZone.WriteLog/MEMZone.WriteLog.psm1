@@ -9,7 +9,7 @@
     Author:         Ioan Popovici
     Creation Date:  2025-01-14
     Last Modified:  2026-07-29
-    Module Version: 2.1.0
+    Module Version: 2.1.1
 .LINK
     https://MEM.Zone
 .LINK
